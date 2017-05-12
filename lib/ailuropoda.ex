@@ -1,6 +1,16 @@
 defmodule Ailuropoda do
   @moduledoc """
   Ailuropoda is Chinese Personal ID Card Validator for Elixir.
+
+  ```
+  id_card_number = "371001198010082394"
+  
+  if Ailuropoda.is_valid?(id_card_number) do
+    # ,,,
+  else
+    # ...
+  end
+  ```
   """
 
   require Logger
@@ -9,7 +19,9 @@ defmodule Ailuropoda do
   @cert_pattern ~r/\A(?<address>[0-9]{6})(?<birthdate>[0-9]{8})[0-9]{3}[0-9X]{1}\z/
 
   @doc """
-  TODO
+  If ID card number is valid, this function returns true.
+
+  spec : https://zh.wikisource.org/wiki/GB_11643-1999_%E5%85%AC%E6%B0%91%E8%BA%AB%E4%BB%BD%E5%8F%B7%E7%A0%81
   """
 
   @spec is_valid?(String.t) :: boolean
@@ -17,19 +29,12 @@ defmodule Ailuropoda do
     case Regex.named_captures(@cert_pattern, cert) do
       nil -> false
       %{"address" => address, "birthdate" => birthdate} ->
-        if is_valid_address?(address) &&
-           is_valid_birthdate?(birthdate) &&
-           is_valid_checkdigit?(cert) do
-          true
-        else
-          false
-        end
+        is_valid_address?(address) && is_valid_birthdate?(birthdate) && is_valid_checkdigit?(cert)
     end
   end
 
   defp is_valid_address?(address) do
-    gb2260 = GB2260.get(address)
-    !is_nil(gb2260.name)
+    !is_nil(GB2260.get(address).name)
   end
 
   @birthdate_pattern ~r/\A(?<year>[0-9]{4})(?<month>[0-9]{2})(?<day>[0-9]{2})\z/
@@ -45,13 +50,13 @@ defmodule Ailuropoda do
   @weights [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2, 1]
   defp is_valid_checkdigit?(cert) do
     cert_list = String.codepoints(cert) |> List.delete_at(-1)
-    check_digit = String.at(cert, -1)
 
     body_sum = Enum.reduce(0..17,
                            fn(i, sum) ->
                              String.to_integer(Enum.at(cert_list, i - 1)) * Enum.at(@weights, i - 1) + sum
                            end)
 
+    check_digit = String.at(cert, -1)
     case 12 - rem(body_sum,11) do
       10 ->
         check_digit == "X"

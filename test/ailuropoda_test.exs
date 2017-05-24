@@ -18,5 +18,8 @@ defmodule AiluropodaTest do
 
     # https://zh.wikisource.org/wiki/GB_11643-1999_%E5%85%AC%E6%B0%91%E8%BA%AB%E4%BB%BD%E5%8F%B7%E7%A0%81
     assert Ailuropoda.is_valid?("11010519491231002X")
+
+    # 15digit
+    assert Ailuropoda.is_valid?("371001801008239")
   end
 end

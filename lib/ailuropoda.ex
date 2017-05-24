@@ -16,7 +16,8 @@ defmodule Ailuropoda do
   require Logger
 
   # ID format
-  @cert_pattern ~r/\A(?<address>[0-9]{6})(?<birthdate>[0-9]{8})[0-9]{3}[0-9X]{1}\z/
+  @cert_pattern_18digit ~r/\A(?<address>[0-9]{6})(?<birthdate>[0-9]{8})[0-9]{3}[0-9X]{1}\z/
+  @cert_pattern_15digit ~r/\A(?<address>[0-9]{6})(?<birthdate>[0-9]{6})[0-9]{3}\z/
 
   @doc """
   If ID card number is valid, this function returns true.
@@ -26,10 +27,15 @@ defmodule Ailuropoda do
 
   @spec is_valid?(String.t) :: boolean
   def is_valid?(cert) do
-    case Regex.named_captures(@cert_pattern, cert) do
-      nil -> false
+    case Regex.named_captures(@cert_pattern_18digit, cert) do
       %{"address" => address, "birthdate" => birthdate} ->
         is_valid_address?(address) && is_valid_birthdate?(birthdate) && is_valid_checkdigit?(cert)
+      nil ->
+        case Regex.named_captures(@cert_pattern_15digit, cert) do
+          %{"address" => address, "birthdate" => birthdate} ->
+            is_valid_address?(address) && is_valid_birthdate?("19#{birthdate}")
+          nil -> false
+        end
     end
   end
 
